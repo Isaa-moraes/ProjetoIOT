@@ -11,9 +11,7 @@ Este repositório contém a estrutura base de um projeto PlatformIO para VS Code
 Para realizar as atividades e salvar suas alterações, você deve **fazer um Fork** deste repositório original para a sua conta pessoal do GitHub.
 
 ### 1️⃣ Criando o Fork
-1. Acesse o repositório oficial da disciplina:  
-   👉 **[https://github.com/IrineuFrancisco/ProjetoIOT](https://github.com/IrineuFrancisco/ProjetoIOT)**
-2. Certifique-se de estar logado com a sua conta do **GitHub**.
+1. Certifique-se de estar logado com a sua conta do **GitHub**.
 3. No canto superior direito da página, clique no botão **Fork** (ou *Criar um fork*).
 4. Na tela seguinte, mantenha o nome do repositório e clique no botão verde **Create fork**.
 5. Agora você possui uma cópia idêntica deste repositório na sua própria conta (`github.com/SEU-USUARIO/ProjetoIOT`).

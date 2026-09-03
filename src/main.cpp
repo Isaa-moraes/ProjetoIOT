@@ -6,26 +6,47 @@
 const char* ssid = "SENAI-DEV2";
 const char* password = "desenvolvimento";
 
-// COLOQUE AQUI O IP DO SEU COMPUTADOR (obtido com 'ipconfig' no CMD)
-const char* mqtt_server = "192.168.0.100"; 
+const char* mqtt_server = "192.168.0.103"; 
 const int mqtt_port = 1883;
 
-// Credenciais de acesso ao Mosquitto
 const char* mqtt_user = "aluno_01";
 const char* mqtt_pass = "desenvolvimento";
 
-// 2. Tópico MQTT e Pino do Hardware
-const char* mqtt_topic_pub = "aula/teste";
-const int LED_PIN = 2; // Pino do LED integrado/protoboard
+// 2. Tópico MQTT e Pino do Hardware atualizados conforme a atividade
+const char* mqtt_topic = "sala/comando"; // Alterado conforme imagem 1 e 2
+const int LED_PIN = 4;                   // Alterado para o pino D4 (GPIO 4) conforme imagem 1 e 3
 
 WiFiClient espClient;
 PubSubClient client(espClient);
+
+// Função que processa os comandos recebidos do Dashboard (Callback)
+void callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Mensagem chegou no tópico: ");
+  Serial.println(topic);
+
+  String mensagem = "";
+  for (int i = 0; i < length; i++) {
+    mensagem += (char)payload[i]; // Constrói a string a partir dos bytes
+  }
+
+  Serial.println("Conteúdo da mensagem: " + mensagem);
+
+  // Lógica para ligar/desligar o LED conforme imagem 3
+  if (mensagem == "LIGAR") {
+    digitalWrite(LED_PIN, HIGH); // Liga o LED no pino D4
+    Serial.println("LED LIGADO!");
+  } 
+  else if (mensagem == "DESLIGAR") {
+    digitalWrite(LED_PIN, LOW);  // Desliga o LED no pino D4
+    Serial.println("LED DESLIGADO!");
+  }
+}
 
 void setup() {
   Serial.begin(115200);
 
   // Configuração do pino do LED
-  pinMode(LED_PIN, OUTPUT);
+  pinMode(LED_PIN, OUTPUT); // Configura o pino D4 como saída (imagem 2)
   digitalWrite(LED_PIN, LOW); // Garante que inicia desligado
 
   // Conexão Wi-Fi
@@ -39,32 +60,24 @@ void setup() {
   Serial.print("IP do ESP32: ");
   Serial.println(WiFi.localIP());
 
-  // Configuração do Servidor MQTT
+  // Configuração do Servidor MQTT e vinculação do Callback
   client.setServer(mqtt_server, mqtt_port);
+  client.setCallback(callback); // Adiciona a escuta do callback (imagem 2)
 }
 
-void loop() {
-  // Conecta ao Broker MQTT caso esteja desconectado
-  if (!client.connected()) {
+void reconnect() {
+  while (!client.connected()) {
     Serial.print("Conectando ao Mosquitto MQTT...");
     if (client.connect("ESP32_Cliente", mqtt_user, mqtt_pass)) {
       Serial.println(" Sucesso!");
       
-      // 1. Publica a mensagem no tópico aula/teste
-      if (client.publish(mqtt_topic_pub, "comunicação feita com sucesso!")) {
-        Serial.println("Mensagem enviada para o broker: 'comunicação feita com sucesso!'");
-      } else {
-        Serial.println("Falha ao enviar mensagem.");
-      }
+      // NOVA LINHA: Assina o tópico de comandos da sala (imagem 2)
+      client.subscribe(mqtt_topic);
+      Serial.print("Inscrito no tópico: ");
+      Serial.println(mqtt_topic);
 
-      // 2. Aciona a sequência do LED
-      Serial.println("Ligando o LED...");
-      digitalWrite(LED_PIN, HIGH); // Liga o LED
-      
-      delay(2000); // Mantém ligado por 2 segundos
-
-      Serial.println("Desligando o LED...");
-      digitalWrite(LED_PIN, LOW); // Desliga o LED
+      // Envia uma mensagem de aviso para a Web informando que a placa ligou
+      client.publish(mqtt_topic, "ESP32 Conectado e Pronto!");
 
     } else {
       Serial.print(" Falhou, rc=");
@@ -73,6 +86,14 @@ void loop() {
       delay(5000);
     }
   }
+}
 
-  client.loop(); // Mantém o cliente ativo
+void loop() {
+  // Mantém a conexão ativa
+  if (!client.connected()) {
+    reconnect();
+  }
+  
+  // Fica escutando os comandos em tempo real
+  client.loop(); 
 }
